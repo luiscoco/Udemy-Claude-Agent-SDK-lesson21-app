@@ -1,0 +1,1 @@
+{"name":"owned-tools-classroom","private":true,"type":"module","scripts":{"test":"node --test utils.test.js","extra":"node extra.cjs"}}

@@ -1,0 +1,273 @@
+{
+  "lanes": [
+    "Student UI",
+    "Node host",
+    "SDK + Claude",
+    "Permission gate",
+    "Private project"
+  ],
+  "arrows": [
+    [
+      0,
+      1,
+      "1. Validate the classroom experiment"
+    ],
+    [
+      1,
+      4,
+      "2. Prepare a fresh fixture copy"
+    ],
+    [
+      1,
+      2,
+      "3. Choose built-in availability"
+    ],
+    [
+      1,
+      3,
+      "4. Compare pre-approval and deny rules"
+    ],
+    [
+      2,
+      3,
+      "5. Enforce the separate host boundary"
+    ],
+    [
+      3,
+      1,
+      "6. Deny unresolved permission requests"
+    ],
+    [
+      1,
+      2,
+      "7. Run the SDK with streaming input"
+    ],
+    [
+      2,
+      1,
+      "8. Inspect actual init.tools"
+    ],
+    [
+      2,
+      4,
+      "9. Record successful tool completion"
+    ],
+    [
+      1,
+      2,
+      "10. Register the MCP-only preview"
+    ],
+    [
+      1,
+      4,
+      "11. Verify tests independently"
+    ],
+    [
+      1,
+      4,
+      "12. Preserve evidence and snapshots"
+    ],
+    [
+      1,
+      0,
+      "13. Format the actual answer"
+    ]
+  ],
+  "steps": [
+    {
+      "number": 1,
+      "title": "Validate the classroom experiment",
+      "source": "src/agent.ts",
+      "code": "if(!value || typeof value!==\"object\" || Array.isArray(value) || !MODES.includes((value as RunConfig).mode))throw new Error(\"Choose a listed tool experiment.\");\n return {mode:(value as RunConfig).mode};",
+      "language": "typescript",
+      "explanation": "Accept a listed experiment. Browser input cannot provide arbitrary paths, shell commands or tool definitions.",
+      "firstLine": 24,
+      "lastLine": 25,
+      "anchors": [
+        "if(!value || typeof value!==\"object\" || Array.isArray(value) || !MODES.includes((value as RunConfig).mode))throw new Error(\"Choose a listed tool experiment.\");"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 1. Accept a listed experiment. Browser input cannot provide arbitrary paths, shell commands or tool definitions. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 2,
+      "title": "Prepare a fresh fixture copy",
+      "source": "src/agent.ts",
+      "code": "for(const name of [\"utils.js\",\"utils.test.js\",\"package.json\",\"extra.cjs\"])await copyFile(resolve(ROOT,\"fixtures\",name),resolve(d.cwd,name));\n if(c.mode!==\"repair\" && c.mode!==\"read-search\")await writeFile(resolve(d.cwd,\"utils.js\"),\"export function add(a,b){ return a+b; }\\n\");\n const fakeToken=\"FAKE-CLASSROOM-21-\"+randomUUID();",
+      "language": "typescript",
+      "explanation": "Copy trusted fixtures into a new owned working directory. The protected .env contains only a generated fake classroom token, never the app API key.",
+      "firstLine": 34,
+      "lastLine": 36,
+      "anchors": [
+        "for(const name of [\"utils.js\",\"utils.test.js\",\"package.json\",\"extra.cjs\"])await copyFile(resolve(ROOT,\"fixtures\",name),resolve(d.cwd,name));"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 2. Copy trusted fixtures into a new owned working directory. The protected .env contains only a generated fake classroom token, never the app API key. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 3,
+      "title": "Choose built-in availability",
+      "source": "src/agent.ts",
+      "code": "if(mode===\"read-search\")return {tools:[\"Read\",\"Glob\",\"Grep\"],allowedTools:[],disallowedTools:[]};\n if(mode===\"repair\")return {tools:[\"Read\",\"Edit\",\"Write\",\"Bash\"],allowedTools:[\"Edit\",\"Write\",\"Bash(npm test)\"],disallowedTools:[]};",
+      "language": "typescript",
+      "explanation": "Select Read/Glob/Grep for inspection or Read/Edit/Write/Bash for repair. The tools array controls built-ins in the model context.",
+      "firstLine": 41,
+      "lastLine": 42,
+      "anchors": [
+        "if(mode===\"read-search\")return {tools:[\"Read\",\"Glob\",\"Grep\"],allowedTools:[],disallowedTools:[]};"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 3. Select Read/Glob/Grep for inspection or Read/Edit/Write/Bash for repair. The tools array controls built-ins in the model context. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 4,
+      "title": "Compare pre-approval and deny rules",
+      "source": "src/agent.ts",
+      "code": "if(mode===\"allow-rule\")return {tools:[\"Bash\"],allowedTools:[\"Bash(npm test)\"],disallowedTools:[]};\n if(mode===\"bare-deny\")return {tools:[\"Bash\"],allowedTools:[],disallowedTools:[\"Bash\"]};\n if(mode===\"scoped-deny\")return {tools:[\"Bash\"],allowedTools:[],disallowedTools:[\"Bash(npm run extra)\"]};",
+      "language": "typescript",
+      "explanation": "Pre-approve npm test without removing Bash. Compare a bare Bash deny with a command-scoped deny; these operate at different layers.",
+      "firstLine": 43,
+      "lastLine": 45,
+      "anchors": [
+        "if(mode===\"allow-rule\")return {tools:[\"Bash\"],allowedTools:[\"Bash(npm test)\"],disallowedTools:[]};"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 4. Pre-approve npm test without removing Bash. Compare a bare Bash deny with a command-scoped deny; these operate at different layers. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 5,
+      "title": "Enforce the separate host boundary",
+      "source": "src/agent.ts",
+      "code": "const value=input.tool_input as Record<string,unknown>,hostAllowed=toolAllowed(c,d.cwd,input.tool_name,value);\n    attempts.push({name:input.tool_name,target:target(d.cwd,input.tool_name,value),hostAllowed});\n    return hostAllowed ? {} : {hookSpecificOutput:{hookEventName:\"PreToolUse\",permissionDecision:\"deny\",permissionDecisionReason:\"Outside the fixed classroom tool/target boundary.\"}};",
+      "language": "typescript",
+      "explanation": "The pre-tool hook records the actual target and checks fixed classroom paths and command strings. This guard is independent of native SDK permission rules.",
+      "firstLine": 76,
+      "lastLine": 78,
+      "anchors": [
+        "const value=input.tool_input as Record<string,unknown>,hostAllowed=toolAllowed(c,d.cwd,input.tool_name,value);"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 5. The pre-tool hook records the actual target and checks fixed classroom paths and command strings. This guard is independent of native SDK permission rules. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 6,
+      "title": "Deny unresolved permission requests",
+      "source": "src/agent.ts",
+      "code": "permissionRequests.push({name,target:target(d.cwd,name,input)});\n   return {behavior:\"deny\",message:\"The classroom callback denies requests not resolved by the configured permission rules. Do not bypass.\"};\n  },",
+      "language": "typescript",
+      "explanation": "The callback records calls not already resolved by the SDK\u2019s permission flow. In this lab it denies them; allowedTools is pre-approval, not a complete allowlist.",
+      "firstLine": 85,
+      "lastLine": 87,
+      "anchors": [
+        "permissionRequests.push({name,target:target(d.cwd,name,input)});"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 6. The callback records calls not already resolved by the SDK\u2019s permission flow. In this lab it denies them; allowedTools is pre-approval, not a complete allowlist. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 7,
+      "title": "Run the SDK with streaming input",
+      "source": "src/agent.ts",
+      "code": "const run=query({prompt:input(),options});\n try {",
+      "language": "typescript",
+      "explanation": "An async input generator keeps the query open for the in-process MCP preview. The SDK owns the model/tool loop; the host consumes its real messages.",
+      "firstLine": 121,
+      "lastLine": 122,
+      "anchors": [
+        "const run=query({prompt:input(),options});"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 7. An async input generator keeps the query open for the in-process MCP preview. The SDK owns the model/tool loop; the host consumes its real messages. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 8,
+      "title": "Inspect actual init.tools",
+      "source": "src/agent.ts",
+      "code": "availableTools=message.tools;sessionId=message.session_id;\n    emit({type:\"initialized\",model:message.model,sessionId,tools:message.tools});",
+      "language": "typescript",
+      "explanation": "Read the actual runtime inventory rather than assuming the requested options are the complete context. Bare deny and MCP-only experiments compare this field.",
+      "firstLine": 126,
+      "lastLine": 127,
+      "anchors": [
+        "availableTools=message.tools;sessionId=message.session_id;"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 8. Read the actual runtime inventory rather than assuming the requested options are the complete context. Bare deny and MCP-only experiments compare this field. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 9,
+      "title": "Record successful tool completion",
+      "source": "src/agent.ts",
+      "code": "if(input.hook_event_name===\"PostToolUse\")completed.push({name:input.tool_name,target:target(d.cwd,input.tool_name,input.tool_input as Record<string,unknown>)});\n    return {};",
+      "language": "typescript",
+      "explanation": "PostToolUse records completed calls separately from attempts, callback requests and model claims. A blocked call must not be counted as completed.",
+      "firstLine": 81,
+      "lastLine": 82,
+      "anchors": [
+        "if(input.hook_event_name===\"PostToolUse\")completed.push({name:input.tool_name,target:target(d.cwd,input.tool_name,input.tool_input as Record<string,unknown>)});"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 9. PostToolUse records completed calls separately from attempts, callback requests and model claims. A blocked call must not be counted as completed. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 10,
+      "title": "Register the MCP-only preview",
+      "source": "src/agent.ts",
+      "code": "tool(\"course_card\",\"Return a fixed classroom course card\",{},async()=>{\n   mcpCalls++;return {content:[{type:\"text\",text:JSON.stringify({topic:\"Built-in tools tour\",marker:\"MCP-ONLY-21\"})}]};\n  }),",
+      "language": "typescript",
+      "explanation": "With tools empty, the configured MCP tool remains. Its actual handler increments a counter and returns a fixed course card; no external service is called.",
+      "firstLine": 110,
+      "lastLine": 112,
+      "anchors": [
+        "tool(\"course_card\",\"Return a fixed classroom course card\",{},async()=>{"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 10. With tools empty, the configured MCP tool remains. Its actual handler increments a counter and returns a fixed course card; no external service is called. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 11,
+      "title": "Verify tests independently",
+      "source": "src/agent.ts",
+      "code": "try {await execute(process.execPath,[\"--test\",\"utils.test.js\"],{cwd,windowsHide:true,timeout:15000});return 0;}\n catch(error){return typeof (error as {code?:unknown}).code===\"number\" ? (error as {code:number}).code : -1;}\n}",
+      "language": "typescript",
+      "explanation": "The host invokes Node\u2019s test runner directly in the owned copy before and after the query. This check does not rely on the model saying npm test passed.",
+      "firstLine": 92,
+      "lastLine": 94,
+      "anchors": [
+        "try {await execute(process.execPath,[\"--test\",\"utils.test.js\"],{cwd,windowsHide:true,timeout:15000});return 0;}"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 11. The host invokes Node\u2019s test runner directly in the owned copy before and after the query. This check does not rely on the model saying npm test passed. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 12,
+      "title": "Preserve evidence and snapshots",
+      "source": "src/agent.ts",
+      "code": "const testsAndScriptsUnchanged=(await Promise.all(names.slice(1).map(async(name,i)=>hash(await readFile(resolve(d.cwd,name),\"utf8\"))===original[i+1]))).every(Boolean);\n const afterFiles=await Promise.all(names.map(async name=>({name:\"after/\"+name,contents:await readFile(resolve(d.cwd,name),\"utf8\")})));\n if(notesCreated)afterFiles.push({name:\"after/repair-notes.md\",contents:await readFile(resolve(d.cwd,\"repair-notes.md\"),\"utf8\")});",
+      "language": "typescript",
+      "explanation": "Compare test/script hashes and display actual after files. Keep original fixture integrity, dummy-data protection and model effects separate.",
+      "firstLine": 143,
+      "lastLine": 145,
+      "anchors": [
+        "const testsAndScriptsUnchanged=(await Promise.all(names.slice(1).map(async(name,i)=>hash(await readFile(resolve(d.cwd,name),\"utf8\"))===original[i+1]))).every(Boolean);"
+      ],
+      "sourceSHA256": "9543c0a7345eec60675ba4f807b319dc173380d27db5e575d1c0f8226d652e61",
+      "narration": "Step 12. Compare test/script hashes and display actual after files. Keep original fixture integrity, dummy-data protection and model effects separate. This source excerpt shows the corresponding application statement."
+    },
+    {
+      "number": 13,
+      "title": "Format the actual answer",
+      "source": "src/client.ts",
+      "code": "if (e.type === \"answer\") renderMarkdown($(\"answer\"), e.text);\n  if (e.type === \"result\") {\n    $(\"status\").textContent = e.status; $(\"cost\").textContent = \"$\" + e.costUsd.toFixed(5);",
+      "language": "typescript",
+      "explanation": "Parse and sanitize assistant Markdown. Show typed results alongside actual call traces, permission events and independent checks.",
+      "firstLine": 19,
+      "lastLine": 21,
+      "anchors": [
+        "if (e.type === \"answer\") renderMarkdown($(\"answer\"), e.text);"
+      ],
+      "sourceSHA256": "2fc606d3a604a2447f85391a99aaa40ba6dc750cc0b48fd14ecb5d186468eedd",
+      "narration": "Step 13. Parse and sanitize assistant Markdown. Show typed results alongside actual call traces, permission events and independent checks. This source excerpt shows the corresponding application statement."
+    }
+  ]
+}
