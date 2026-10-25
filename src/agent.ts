@@ -1,6 +1,8 @@
 import {query,tool,createSdkMcpServer,type Options,type SDKUserMessage} from "@anthropic-ai/claude-agent-sdk";
 import {mkdir,readFile,writeFile,copyFile,access} from "node:fs/promises";
 import {resolve,relative} from "node:path";
+import {tmpdir} from "node:os";
+import {realpathSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import {randomUUID,createHash} from "node:crypto";
 import {execFile} from "node:child_process";
@@ -25,8 +27,8 @@ export function validateConfig(value:unknown):RunConfig {
  return {mode:(value as RunConfig).mode};
 }
 export function directories(mode:Mode,id:string) {
- const root=resolve(ROOT,".runtime",mode,id);
- return {root,cwd:resolve(root,"project"),home:resolve(root,"home"),sdkHome:resolve(root,"sdk-home")};
+ const root=resolve(realpathSync.native(tmpdir()),"claude-sdk21",mode.slice(0,3),id.slice(0,12));
+ return {root,cwd:resolve(root,"p"),home:resolve(root,"h"),sdkHome:resolve(root,"c")};
 }
 export async function prepareWorkspace(c:RunConfig,id:string) {
  const d=directories(c.mode,id);
@@ -61,7 +63,7 @@ export function target(cwd:string,name:string,input:Record<string,unknown>) {
  if(name.startsWith("mcp__"))return "constant classroom course card";
  return relative(cwd,resolve(cwd,String(input.file_path || input.path || "."))).replaceAll("\\","/") || String(input.pattern || ".");
 }
-export function lessonOptions(c:RunConfig,id:string,attempts:Call[],completed:Call[],permissionRequests:Call[],controller=new AbortController()):Options {
+export function lessonOptions(c:RunConfig,id:string,attempts:Call[],completed:Call[],permissionRequests:Call[],controller=new AbortController(),failed:Call[]=[]):Options {
  const d=directories(c.mode,id),env={...process.env};
  for(const key of ["CLAUDE_CODE_DISABLE_CLAUDE_MDS","CLAUDE_CODE_DISABLE_ATTACHMENTS","OTEL_LOG_RAW_API_BODIES"])delete env[key];
  return {
@@ -79,6 +81,10 @@ export function lessonOptions(c:RunConfig,id:string,attempts:Call[],completed:Ca
    }]}],
    PostToolUse:[{hooks:[async input=>{
     if(input.hook_event_name==="PostToolUse")completed.push({name:input.tool_name,target:target(d.cwd,input.tool_name,input.tool_input as Record<string,unknown>)});
+    return {};
+   }]}],
+   PostToolUseFailure:[{hooks:[async input=>{
+    if(input.hook_event_name==="PostToolUseFailure")failed.push({name:input.tool_name,target:target(d.cwd,input.tool_name,input.tool_input as Record<string,unknown>),error:redact(input.error)});
     return {};
    }]}],
   },canUseTool:async(name,input)=>{
@@ -104,7 +110,7 @@ export async function runAgent(c:RunConfig,emit:(e:LabEvent)=>void,controller=ne
  const beforeSource=await readFile(resolve(d.cwd,"utils.js"),"utf8"),beforeTest=await checkTests(d.cwd);
  const fixtureBefore=await Promise.all(names.map(async name=>({name:"before/"+name,contents:await readFile(resolve(d.cwd,name),"utf8")})));
  emit({type:"fixtures",files:fixtureBefore});
- const attempts:Call[]=[],completed:Call[]=[],permissionRequests:Call[]=[],options=lessonOptions(c,id,attempts,completed,permissionRequests,controller);
+ const attempts:Call[]=[],completed:Call[]=[],failed:Call[]=[],permissionRequests:Call[]=[],options=lessonOptions(c,id,attempts,completed,permissionRequests,controller,failed);
  let mcpCalls=0;
  if(c.mode==="mcp-only")options.mcpServers={classroom:createSdkMcpServer({name:"classroom",version:"1.0.0",tools:[
   tool("course_card","Return a fixed classroom course card",{},async()=>{
@@ -145,5 +151,5 @@ export async function runAgent(c:RunConfig,emit:(e:LabEvent)=>void,controller=ne
  if(notesCreated)afterFiles.push({name:"after/repair-notes.md",contents:await readFile(resolve(d.cwd,"repair-notes.md"),"utf8")});
  emit({type:"fixtures",files:[...fixtureBefore,...afterFiles]});
  emit({type:"result",status:sdkStatus,text,sessionId,costUsd});
- emit({type:"evidence",mode:c.mode,availableTools,attempts,completed,permissionRequests,beforeTest,afterTest,sourceChanged,notesCreated,extraScriptRan,fakeSecretReturned,mcpCalls,originalFixturesUnchanged,testsAndScriptsUnchanged,protectedReadAttempted:attempts.some(a=>a.name==="Read" && a.target===".env")});
+ emit({type:"evidence",mode:c.mode,availableTools,attempts,completed,failed,permissionRequests,beforeTest,afterTest,sourceChanged,notesCreated,extraScriptRan,fakeSecretReturned,mcpCalls,originalFixturesUnchanged,testsAndScriptsUnchanged,protectedReadAttempted:attempts.some(a=>a.name==="Read" && a.target===".env")});
 }

@@ -22,7 +22,7 @@ function receive(e: LabEvent) {
     renderMarkdown($("answer"), e.text);
   }
   if (e.type === "evidence") {
-    json("evidence",{mode:e.mode,availableTools:e.availableTools,completed:e.completed,permissionRequests:e.permissionRequests,beforeTest:e.beforeTest,afterTest:e.afterTest,sourceChanged:e.sourceChanged,notesCreated:e.notesCreated,extraScriptRan:e.extraScriptRan,fakeSecretReturned:e.fakeSecretReturned,protectedReadAttempted:e.protectedReadAttempted,mcpCalls:e.mcpCalls,attempts:e.attempts,originalFixturesUnchanged:e.originalFixturesUnchanged,testsAndScriptsUnchanged:e.testsAndScriptsUnchanged});
+    json("evidence",{mode:e.mode,availableTools:e.availableTools,completed:e.completed,failed:e.failed,permissionRequests:e.permissionRequests,beforeTest:e.beforeTest,afterTest:e.afterTest,sourceChanged:e.sourceChanged,notesCreated:e.notesCreated,extraScriptRan:e.extraScriptRan,fakeSecretReturned:e.fakeSecretReturned,protectedReadAttempted:e.protectedReadAttempted,mcpCalls:e.mcpCalls,attempts:e.attempts,originalFixturesUnchanged:e.originalFixturesUnchanged,testsAndScriptsUnchanged:e.testsAndScriptsUnchanged});
 
     const tr = document.createElement("tr"), config = rows.filter(x => x.type === "options").at(-1) as Extract<LabEvent, {type:"options"}>;
     for (const value of [config.config.mode,e.availableTools.join(", "),e.completed.map(t=>t.name+":"+t.target).join("; ") || "None",String(e.permissionRequests.length),e.beforeTest+" → "+e.afterTest]) {

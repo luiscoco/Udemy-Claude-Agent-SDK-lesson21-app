@@ -31,5 +31,5 @@ test("private configuration prevents unrelated settings, plugins and MCP sources
  const o=lessonOptions({mode:"read-search"},"test",[],[],[]);
  assert.deepEqual(o.settingSources,[]);assert.deepEqual(o.plugins,[]);assert.equal(o.strictMcpConfig,true);
  assert.equal(o.permissionMode,"default");assert.equal(o.persistSession,false);
- assert.ok(o.env!.CLAUDE_CONFIG_DIR!.includes(".runtime"));
+ assert.equal(o.env!.CLAUDE_CONFIG_DIR,directories("read-search","test").sdkHome);
 });

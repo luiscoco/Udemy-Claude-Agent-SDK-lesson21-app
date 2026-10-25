@@ -74,7 +74,7 @@ npm test
 
 Accept a listed experiment. Browser input cannot provide arbitrary paths, shell commands or tool definitions.
 
-Source: `src/agent.ts`, lines 24–25. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 26–27. Selected source; surrounding code omitted.
 
 ```typescript
 if(!value || typeof value!=="object" || Array.isArray(value) || !MODES.includes((value as RunConfig).mode))throw new Error("Choose a listed tool experiment.");
@@ -85,7 +85,7 @@ if(!value || typeof value!=="object" || Array.isArray(value) || !MODES.includes(
 
 Copy trusted fixtures into a new owned working directory. The protected .env contains only a generated fake classroom token, never the app API key.
 
-Source: `src/agent.ts`, lines 34–36. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 36–38. Selected source; surrounding code omitted.
 
 ```typescript
 for(const name of ["utils.js","utils.test.js","package.json","extra.cjs"])await copyFile(resolve(ROOT,"fixtures",name),resolve(d.cwd,name));
@@ -97,7 +97,7 @@ for(const name of ["utils.js","utils.test.js","package.json","extra.cjs"])await 
 
 Select Read/Glob/Grep for inspection or Read/Edit/Write/Bash for repair. The tools array controls built-ins in the model context.
 
-Source: `src/agent.ts`, lines 41–42. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 43–44. Selected source; surrounding code omitted.
 
 ```typescript
 if(mode==="read-search")return {tools:["Read","Glob","Grep"],allowedTools:[],disallowedTools:[]};
@@ -108,7 +108,7 @@ if(mode==="read-search")return {tools:["Read","Glob","Grep"],allowedTools:[],dis
 
 Pre-approve npm test without removing Bash. Compare a bare Bash deny with a command-scoped deny; these operate at different layers.
 
-Source: `src/agent.ts`, lines 43–45. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 45–47. Selected source; surrounding code omitted.
 
 ```typescript
 if(mode==="allow-rule")return {tools:["Bash"],allowedTools:["Bash(npm test)"],disallowedTools:[]};
@@ -120,7 +120,7 @@ if(mode==="allow-rule")return {tools:["Bash"],allowedTools:["Bash(npm test)"],di
 
 The pre-tool hook records the actual target and checks fixed classroom paths and command strings. This guard is independent of native SDK permission rules.
 
-Source: `src/agent.ts`, lines 76–78. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 78–80. Selected source; surrounding code omitted.
 
 ```typescript
 const value=input.tool_input as Record<string,unknown>,hostAllowed=toolAllowed(c,d.cwd,input.tool_name,value);
@@ -132,7 +132,7 @@ const value=input.tool_input as Record<string,unknown>,hostAllowed=toolAllowed(c
 
 The callback records calls not already resolved by the SDK’s permission flow. In this lab it denies them; allowedTools is pre-approval, not a complete allowlist.
 
-Source: `src/agent.ts`, lines 85–87. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 91–93. Selected source; surrounding code omitted.
 
 ```typescript
 permissionRequests.push({name,target:target(d.cwd,name,input)});
@@ -144,7 +144,7 @@ permissionRequests.push({name,target:target(d.cwd,name,input)});
 
 An async input generator keeps the query open for the in-process MCP preview. The SDK owns the model/tool loop; the host consumes its real messages.
 
-Source: `src/agent.ts`, lines 121–122. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 127–128. Selected source; surrounding code omitted.
 
 ```typescript
 const run=query({prompt:input(),options});
@@ -155,7 +155,7 @@ const run=query({prompt:input(),options});
 
 Read the actual runtime inventory rather than assuming the requested options are the complete context. Bare deny and MCP-only experiments compare this field.
 
-Source: `src/agent.ts`, lines 126–127. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 132–133. Selected source; surrounding code omitted.
 
 ```typescript
 availableTools=message.tools;sessionId=message.session_id;
@@ -166,7 +166,7 @@ availableTools=message.tools;sessionId=message.session_id;
 
 PostToolUse records completed calls separately from attempts, callback requests and model claims. A blocked call must not be counted as completed.
 
-Source: `src/agent.ts`, lines 81–82. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 83–84. Selected source; surrounding code omitted.
 
 ```typescript
 if(input.hook_event_name==="PostToolUse")completed.push({name:input.tool_name,target:target(d.cwd,input.tool_name,input.tool_input as Record<string,unknown>)});
@@ -177,7 +177,7 @@ if(input.hook_event_name==="PostToolUse")completed.push({name:input.tool_name,ta
 
 With tools empty, the configured MCP tool remains. Its actual handler increments a counter and returns a fixed course card; no external service is called.
 
-Source: `src/agent.ts`, lines 110–112. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 116–118. Selected source; surrounding code omitted.
 
 ```typescript
 tool("course_card","Return a fixed classroom course card",{},async()=>{
@@ -189,7 +189,7 @@ tool("course_card","Return a fixed classroom course card",{},async()=>{
 
 The host invokes Node’s test runner directly in the owned copy before and after the query. This check does not rely on the model saying npm test passed.
 
-Source: `src/agent.ts`, lines 92–94. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 98–100. Selected source; surrounding code omitted.
 
 ```typescript
 try {await execute(process.execPath,["--test","utils.test.js"],{cwd,windowsHide:true,timeout:15000});return 0;}
@@ -201,7 +201,7 @@ try {await execute(process.execPath,["--test","utils.test.js"],{cwd,windowsHide:
 
 Compare test/script hashes and display actual after files. Keep original fixture integrity, dummy-data protection and model effects separate.
 
-Source: `src/agent.ts`, lines 143–145. Selected source; surrounding code omitted.
+Source: `src/agent.ts`, lines 149–151. Selected source; surrounding code omitted.
 
 ```typescript
 const testsAndScriptsUnchanged=(await Promise.all(names.slice(1).map(async(name,i)=>hash(await readFile(resolve(d.cwd,name),"utf8"))===original[i+1]))).every(Boolean);
@@ -230,6 +230,7 @@ if (e.type === "answer") renderMarkdown($("answer"), e.text);
 - Independent classroom guard: The host limits file targets and exact commands separately from SDK pre-approval. Repair uses broad Edit/Write pre-approval while the guard permits only utils.js edits and repair-notes.md writes. Private directories are not an operating-system sandbox.
 - Observed refusals and concurrency: A model may refuse a known-denied operation without calling a tool. protectedReadAttempted makes this visible. Read-only tools may run in parallel, but this app does not require or claim a particular scheduling order.
 - MCP preview: The one constant in-process MCP tool completes the slide’s tools: [] exercise. The next lesson explains authoring custom tools in depth. Built-in availability is distinct from configured MCP tools.
+- Short temporary workspaces: Generated projects use short paths under the operating system temporary directory. This avoids Windows shell bookkeeping failures caused by deeply nested course paths. The original fixtures and real application .env remain in the application folder.
 
 Media, .env, dependencies and private runtime files remain local and excluded from Git. No stored answer replaces an actual result.
 
